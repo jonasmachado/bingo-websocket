@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title>Chat do jonas</title>
+    
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+
+        <link rel="stylesheet" href="styles.css">
+    </head>
+    <body>
+        <div id="chat">
+            <div id="username" ></div>
+            <div class="messages" id="messages">
+
+                <table id="card"></table>
+
+            </div>
+            <input type="text" name="message" placeholder="digite sua mensagem" >
+            <button onclick="join()">Iniciar</button>
+            <button onclick="bingo()">Bingo</button>
+            <button onclick="line()">Linha</button>
+            <button onclick="edges()">Cantos</button>
+        </div>
+        </div>
+        </div>
+
+        <script>
+            var socket = io('http://localhost:4200');
+
+            socket.on('CountDownToStart', function(numero){
+                $('#username').html('<div class="message">Iniciando jogo em: '+ numero +' segundos </div>');
+            });
+
+            socket.on('CountDownToNumber', function(numero){
+                $('#username').html('<div class="message">Proximo número em: '+ numero +' segundos </div>');
+            });
+
+            socket.on('DrawnNumber', function(numero){
+                $('#username').html('<div class="message">Numero sorteado: '+ numero +'</div>');
+            });
+
+            socket.on('CountDownRoom', function(numero){
+                $('#username').html('<div class="message">Aguardando jogadores: '+ numero +'</div>');
+            });
+
+            socket.on('BingoPaid', function(vencedor){
+                $('#username').html('<h2 class="message">BINGO!!!! Vencedor: '+ vencedor +'</h2>');
+            });
+
+            socket.on('GameOver', function(){
+                $('#username').html('<h2 class="message">Fim de jogo, todos os números sorteados</h2>');
+            });
+
+            socket.on('MissedBingo', function(){
+                $('#username').html('<h2 class="message">Você queimou o Bingo ! Fim de jogo</h2>');
+            });
+
+            socket.on('UpdateCard', function(refCard){
+                var numeros = refCard.numbers.split(',');
+                var card =  $('#card');
+                var letrasB = [];
+                var letrasI = [];
+                var letrasN = [];
+                var letrasG = [];
+                var letrasO = [];
+
+                for(var i = 0; i < 5; i++) {
+                    letrasB.push(numeros[i]);
+                }
+                
+                for(var i = 5; i < 10; i++) {
+                    letrasI.push(numeros[i]);
+                }
+
+                for(var i = 10; i < 14; i++) {
+                    
+                    if(i==12) {
+                        letrasN.push("#");
+                    }
+
+                    letrasN.push(numeros[i]);
+                }
+
+                for(var i = 14; i < 19; i++) {
+                    letrasG.push(numeros[i]);
+                }
+
+                for(var i = 19; i < 24; i++) {
+                    letrasO.push(numeros[i]);
+                }
+
+                card.append("<tr><td>" + "B" + "</td><td>" + "I" + "</td><td>" + "N" +"</td><td>" + "G" + "</td><td>" + "O" + "</td></tr>");
+ 
+                for(var i = 0; i < 5; i++) {
+                    card.append("<tr><td>" + letrasB[i] + "</td><td>" + letrasI[i] + "</td><td>" + letrasN[i] +"</td><td>" + letrasG[i] + "</td><td>" + letrasO[i] + "</td></tr>");
+                }
+            });
+
+            function bingo(){
+                socket.emit('bingo', 'bingo');
+            }
+
+            function line(){
+                socket.emit('line', 'line');
+            }
+
+            function edges(){
+                socket.emit('edges', 'edges');
+            }
+
+            function join() {''
+                socket.emit('join', 'join');   
+            }      
+        </script>
+    </body>
+</html>
