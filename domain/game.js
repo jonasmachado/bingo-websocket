@@ -19,8 +19,23 @@ var Game = class Game {
         this.drawnNumbers = [];
         this.gameOver = false;
 
+        this.winnersEdges = [];
+        this.winnersLine = [];
+        this.winnersBingo = [];
+
         this.lineAlreadyPaid = false;
         this.edgesAlreadyPaid = false;
+
+        this.entryFee;
+
+        this.bingoTimeout = false;
+        this.lineTimeout = false;
+        this.edgesTimeout = false;
+
+        this.linePrize = 0;
+        this.edgesPrize = 0;
+        this.bingoPrize = 0;
+        this.tax = 0;
 
         io.to(room.name).emit("GameStarted");
         shuffleArray(this.toBeDrawnNumbers);
@@ -35,6 +50,8 @@ var Game = class Game {
                 generateCards(game);
                 
                 game.cardsGenerated = true;
+
+                emitTotalAmounts(game);
             }
 
             if(game.countdown > 0) {
@@ -48,7 +65,24 @@ var Game = class Game {
 
                 return;
             }
+
+            if(game.bingoTimeout) {
+                game.bingoTimeout = false;
+                clearInterval(game.intervalGame);
+                io.to(room.name).emit("GameOver");   
+            }
             
+            if(game.lineTimeout) {
+                game.lineTimeout = false;
+                game.lineAlreadyPaid = true;
+                emitAmountLine(game);
+            }
+
+            if(game.edgesTimeout) {
+                game.edgesTimeout = false;
+                game.edgesAlreadyPaid = true;
+            }
+
             game.started = true;
             game.countdown = 10;
             
@@ -100,11 +134,13 @@ var Game = class Game {
             }
 
             io.to(room.name).emit("BingoPaid", "Jonas"); 
-            clearInterval(this.intervalGame);
+            this.bingoTimeout = true;
 
             var player = this.players.find(x => x.client == socket);
 
             player.client.emit("YouWin");
+
+            this.winnersBingo.push(player);
         }
         
         function emitRoomMessage(message) {
@@ -112,17 +148,6 @@ var Game = class Game {
         }
 
         function line(socket) {
-            //0,1,2,3,4
-            //0,5,10,14,19
-            //2,7,16,21
-            //3,8,12,17,22
-            //4,9,13,18,23
-
-            //5,6,7,8,9
-            //10,11,12,23
-            //14,15,16,17,18
-            //19,20,21,22,23
-
             if(this.lineAlreadyPaid)
                 return;
 
@@ -130,12 +155,14 @@ var Game = class Game {
             var card = player.card.numbers.split(',');
             var boa = this.drawnNumbers[this.drawnNumbers.length -1];
 
+            //vertical
             var v1 = [parseInt(card[0]), parseInt(card[1]), parseInt(card[2]), parseInt(card[3]), parseInt(card[4])];
             var v2 = [parseInt(card[5]), parseInt(card[6]), parseInt(card[7]), parseInt(card[8]), parseInt(card[9])];
             var v3 = [parseInt(card[10]), parseInt(card[11]), parseInt(card[12]), parseInt(card[13])];
             var v4 = [parseInt(card[14]), parseInt(card[15]), parseInt(card[16]), parseInt(card[17]), parseInt(card[18])];
             var v5 = [parseInt(card[19]), parseInt(card[20]), parseInt(card[21]), parseInt(card[22]), parseInt(card[23])];
             
+            //horizontal
             var h1 = [parseInt(card[0]), parseInt(card[5]), parseInt(card[10]), parseInt(card[14]), parseInt(card[19])];
             var h2 = [parseInt(card[1]), parseInt(card[6]), parseInt(card[11]), parseInt(card[15]), parseInt(card[20])];
             var h3 = [parseInt(card[2]), parseInt(card[7]), parseInt(card[16]), parseInt(card[21])];
@@ -144,7 +171,7 @@ var Game = class Game {
 
             let isIn = (arr, target) => target.every(v => arr.includes(v));
 
-            if((isIn(this.drawnNumbers, v1) && v1.includes(boa)) ||
+            if(true || (isIn(this.drawnNumbers, v1) && v1.includes(boa)) ||
                (isIn(this.drawnNumbers, v2) && v2.includes(boa)) ||
                (isIn(this.drawnNumbers, v3) && v3.includes(boa)) ||
                (isIn(this.drawnNumbers, v4) && v4.includes(boa)) ||
@@ -155,15 +182,55 @@ var Game = class Game {
                (isIn(this.drawnNumbers, h4) && h4.includes(boa)) ||
                (isIn(this.drawnNumbers, h5) && h5.includes(boa))  ) {
                 
-                console.log("Line Paid");
-                this.lineAlreadyPaid = true;
+                console.log("Line Paid");              
                 io.to(room.name).emit("LinePaid", "Jonas"); 
+                this.lineTimeout = true;
+                this.winnersLine.push(player);
                 player.client.emit("YouWinLine");
                 return;
             }
 
             console.log("Missed Line");
             player.client.emit("MissedLine");
+        }
+
+        function emitAmountEdges(game){
+            var winners = game.winnersEdges.length;
+            game.winnersEdges.forEach(function(item) {
+                item.client.emit("PlayerEdgesPrize" , game.edgesPrize / winners)
+            });
+
+            io.to(room.name).emit("RoomEdgesRate", game.edgesPrize / winners, winners); 
+        }
+
+        function emitAmountLine(game){
+            var winners = game.winnersLine.length;
+            game.winnersLine.forEach(function(item) {
+                item.client.emit("PlayerLinePrize" , game.linePrize / winners)
+            });
+
+            io.to(room.name).emit("RoomLineRate", game.linePrize / winners, winners); 
+        }
+
+        function emitAmountBingo(game){
+            var winners = game.winnersBingo.length;
+            game.winnersBingo.forEach(function(item) {
+                item.client.emit("PlayerBingoPrize" , game.bingoPrize / winners)
+            });
+
+            io.to(room.name).emit("RoomBingoRate", game.bingoPrize / winners, winners); 
+        }
+
+        function emitTotalAmounts(game) {
+            var totalPrize = 20;//this.players.length * prize;
+            game.linePrize = totalPrize * 0.20;
+            game.bingoPrize = totalPrize * 0.30;
+            game.edgesPrize = totalPrize * 0.20
+            game.tax = totalPrize * 0.30;
+
+            game.totalPrize -= game.tax;
+
+            io.to(room.name).emit("TotalAmounts", totalPrize, game.bingoPrize, game.linePrize, game.edgesPrize); 
         }
 
         function edges(socket) {
@@ -181,7 +248,7 @@ var Game = class Game {
             if(isIn(this.drawnNumbers, edges) && edges.includes(boa))
             {
                 console.log("Edge Paid");
-                this.edgesAlreadyPaid = true;
+                this.edgesTimeout = true;
                 io.to(room.name).emit("EdgePaid", "Jonas"); 
                 player.client.emit("YouWinEdge");
                 return;
@@ -200,7 +267,7 @@ var Game = class Game {
             }
         }
 
-        this.intervalGame = setInterval(() => {timeToStart(this)}, 100);
+        this.intervalGame = setInterval(() => {timeToStart(this)}, 400);
     }   
 }
 
