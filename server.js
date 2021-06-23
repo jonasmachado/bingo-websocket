@@ -14,7 +14,10 @@ app.engine('html', require('ejs').renderFile);
 app.set('view engine', 'html');
 
 var Matchmaker = require('./domain/matchmaker');
+var Integration = require('./domain/integration');
+
 var maker = new Matchmaker(io);
+var integration = new Integration();
 
 app.use('/', (req, res) => {  
     res.render('index.html');
@@ -25,11 +28,18 @@ let messages = [];
 io.on('connection', socket => {
     console.log('Socket conectado: ' + socket.id);
 
-    socket.on("join", data  => {
-        maker.joinPlayer(socket, 1, io);
+    socket.on("join", (ticket, token)  => {
+        var mode = integration.checkTicket(ticket, token);
+
+        if(!mode) {
+            socker.emit("InvalidTicket", "");
+            return;
+        }
+
+        maker.joinPlayer(socket, mode, io);
     });
 
-    socket.on("bingo", data  => {
+    socket.on("bingo", data  => {   
         var roomName;
 
         socket.rooms.forEach(function(rm, idx) {

@@ -34,7 +34,7 @@ var MatchMaker = class MatchMaker {
         }
         
         function roomDismissed(room){
-            io.to(room.name).emit("message","A sala foi fechada por falta de jogadores.");
+            io.to(room.name).emit("NotEnoughPlayers","A sala foi fechada por falta de jogadores.");
             console.warn('Room dismissed: ' + room.name)
         }
         
