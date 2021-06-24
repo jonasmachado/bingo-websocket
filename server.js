@@ -29,14 +29,13 @@ io.on('connection', socket => {
     console.log('Socket conectado: ' + socket.id);
 
     socket.on("join", (ticket, token)  => {
-        var mode = integration.checkTicket(ticket, token);
-
-        if(!mode) {
-            socker.emit("InvalidTicket", "");
-            return;
-        }
-
-        maker.joinPlayer(socket, mode, io);
+        integration.checkTicket(ticket, token)
+            .then(response => {
+                maker.joinPlayer(socket, response, io);
+            })
+            .catch(err => {
+                socket.emit("InvalidTicket", "");
+            }); 
     });
 
     socket.on("bingo", data  => {   

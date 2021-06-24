@@ -39,11 +39,20 @@ var MatchMaker = class MatchMaker {
         }
         
         function startGame(room){   
-            var game = new Game(room, room.io);
+            var game = new Game(room, room.io, getModePrize(room.type));
 
             room.maker.games.push(game);
 
             console.warn('Game Started for room: ' + room.name);
+        }
+
+        function getModePrize(mode) {
+            switch(mode){
+                case 1: return 0.5;
+                case 2: return 1.5;
+                case 3: return 5;
+                case 4: return 20;
+            }
         }
 
         function callBingo(name, socket){

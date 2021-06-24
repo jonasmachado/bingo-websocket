@@ -3,23 +3,16 @@ const axios = require('axios');
 var Integration = class Integration {
 
     constructor() {
-        this.checkTicket = checkTicket;
+        this.checkTicket = async (ticket, token) => {
 
-        function checkTicket(ticket, token) {
-            axios.get('https://d9027e76-505f-450c-b038-b86ce99711f4.mock.pstmn.io/game/check/ticket', null, {
+            const response = await axios.get('https://d9027e76-505f-450c-b038-b86ce99711f4.mock.pstmn.io/game/check/ticket', {
                 params : {
                     ticket,
                     token
                 }
-            })
-            .then(response => {
-                console.log(response.data.mode);
-                return response.data.mode;
-            })
-            .catch(error => {
-                console.log(error);
-                return false;
             });
+
+            return response.data.mode;
         }
     }   
 }

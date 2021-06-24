@@ -2,7 +2,7 @@ var Player = require('./player');
 var CardCollection = require('./cardCollection');
 
 var Game = class Game {
-    constructor(room, io) {
+    constructor(room, io, modePrize) {
         this.io = io;
         this.room = room;
         this.interval;
@@ -32,6 +32,7 @@ var Game = class Game {
         this.lineTimeout = false;
         this.edgesTimeout = false;
 
+        this.modePrize = modePrize;
         this.linePrize = 0;
         this.edgesPrize = 0;
         this.bingoPrize = 0;
@@ -70,6 +71,7 @@ var Game = class Game {
                 game.bingoTimeout = false;
                 clearInterval(game.intervalGame);
                 io.to(room.name).emit("GameOver");   
+                emitAmountBingo(game);
             }
             
             if(game.lineTimeout) {
@@ -81,6 +83,7 @@ var Game = class Game {
             if(game.edgesTimeout) {
                 game.edgesTimeout = false;
                 game.edgesAlreadyPaid = true;
+                emitAmountEdges(game);
             }
 
             game.started = true;
@@ -171,7 +174,7 @@ var Game = class Game {
 
             let isIn = (arr, target) => target.every(v => arr.includes(v));
 
-            if(true || (isIn(this.drawnNumbers, v1) && v1.includes(boa)) ||
+            if((isIn(this.drawnNumbers, v1) && v1.includes(boa)) ||
                (isIn(this.drawnNumbers, v2) && v2.includes(boa)) ||
                (isIn(this.drawnNumbers, v3) && v3.includes(boa)) ||
                (isIn(this.drawnNumbers, v4) && v4.includes(boa)) ||
@@ -222,7 +225,7 @@ var Game = class Game {
         }
 
         function emitTotalAmounts(game) {
-            var totalPrize = 20;//this.players.length * prize;
+            var totalPrize = game.players.length * game.modePrize;
             game.linePrize = totalPrize * 0.20;
             game.bingoPrize = totalPrize * 0.30;
             game.edgesPrize = totalPrize * 0.20
@@ -267,7 +270,7 @@ var Game = class Game {
             }
         }
 
-        this.intervalGame = setInterval(() => {timeToStart(this)}, 400);
+        this.intervalGame = setInterval(() => {timeToStart(this)}, 100);
     }   
 }
 
