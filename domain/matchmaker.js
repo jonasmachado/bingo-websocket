@@ -1,19 +1,19 @@
 var Room = require('./rooms');
 var Game = require('./game');
+var Integration = require('./integration');
 
 var MatchMaker = class MatchMaker {
     constructor(io) {
+        this.integration = new Integration();
         this.io = io;
         this.joinPlayer = enqueuePlayer;
         this.callBingo = callBingo;
         this.callLine = callLine;
         this.callEdges = callEdges;
         this.startGame = startGame;
-        this.roomDismissed = roomDismissed;
         this.callUserMessage = callUserMessage;
         this.rooms = [];
         this.games = [];
-        this.index = 1;
 
         function enqueuePlayer(client, type) {
             var room = this.rooms.find(item => item.type == type && item.open)
@@ -27,15 +27,14 @@ var MatchMaker = class MatchMaker {
         }
         
         function createRoom(client, type, maker) {
-            var room = new Room(maker.index, type, maker);
-            room.addClient(client);
-            maker.rooms.push(room);
-            maker.index += 1;
-        }
-        
-        function roomDismissed(room){
-            io.to(room.name).emit("NotEnoughPlayers","A sala foi fechada por falta de jogadores.");
-            console.warn('Room dismissed: ' + room.name)
+            maker.integration.getIndex(type).then(response => {
+                var room = new Room(response.id, type, maker);
+                room.addClient(client);
+                maker.rooms.push(room);
+            })
+            .catch(err => {
+                console.log(err);
+            });        
         }
         
         function startGame(room){   

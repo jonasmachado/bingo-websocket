@@ -1,5 +1,8 @@
+var Integration = require('./integration');
+
 var Room = class Room {
     constructor(number, type, maker) {
+        this.index = number;
         this.name = 'room-' + number;
         this.clients = [];
         this.type = type;
@@ -37,11 +40,13 @@ var Room = class Room {
             clearInterval(room.interval);
 
             room.open = false;
-       /*     if(room.clients.length < 3) {
-                error(room);
+            if(room.clients.length < 3) {
+                room.io.to(room.name).emit("NotEnoughPlayers","A sala foi fechada por falta de jogadores. A taxa de entrada será devolvida");
+                new Integration().abortGame(room);
+                console.warn('Room dismissed: ' + room.name)
                 return;
             }
-        */
+        
             room.maker.startGame(room);          
         }
 

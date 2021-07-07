@@ -1,4 +1,6 @@
-var Player = require('./player');
+const Player = require('./player');
+const Integration = require('./integration');
+
 var CardCollection = require('./cardCollection');
 
 var Game = class Game {
@@ -38,6 +40,8 @@ var Game = class Game {
         this.bingoPrize = 0;
         this.tax = 0;
 
+        this.integration = new Integration();
+
         io.to(room.name).emit("GameStarted");
         shuffleArray(this.toBeDrawnNumbers);
 
@@ -71,6 +75,7 @@ var Game = class Game {
                 game.bingoTimeout = false;
                 clearInterval(game.intervalGame);
                 io.to(room.name).emit("GameOver");   
+                game.integration.finalizeGame(game);
                 emitAmountBingo(game);
             }
             
@@ -94,6 +99,7 @@ var Game = class Game {
             if(drwnNbr === undefined) {
                 clearInterval(game.intervalGame);
                 io.to(room.name).emit("GameOver");   
+                game.integration.finalizeGame(game);
                 return; 
             }
 
@@ -270,7 +276,7 @@ var Game = class Game {
             }
         }
 
-        this.intervalGame = setInterval(() => {timeToStart(this)}, 100);
+        this.intervalGame = setInterval(() => {timeToStart(this)}, 50);
     }   
 }
 

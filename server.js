@@ -29,12 +29,15 @@ io.on('connection', socket => {
     console.log('Socket conectado: ' + socket.id);
 
     socket.on("join", (ticket, token)  => {
+        
         integration.checkTicket(ticket, token)
             .then(response => {
-                maker.joinPlayer(socket, response, io);
+                socket.userId = response.userId;
+                maker.joinPlayer(socket, response.mode, io);
+                socket.emit("Joined", "");
             })
             .catch(err => {
-                socket.emit("InvalidTicket", "");
+                socket.emit("InvalidTicket", err.response.data.message);
             }); 
     });
 
@@ -86,6 +89,11 @@ io.on('connection', socket => {
         maker.callEdges(roomName, socket);
     });
     
+    socket.on('disconnect', function() {
+        console.log('disconectei o safado');
+  
+     });
+  
 });
 
 
