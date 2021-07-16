@@ -4,7 +4,7 @@ const path = require('path');
 const app = express();
 const server = require('http').createServer(app);
 const io = require('socket.io')(server, {cors: {
-    origins: ['http://localhost:4200']
+    origins: ['*']
     }
 });
 
@@ -97,4 +97,4 @@ io.on('connection', socket => {
 });
 
 
-server.listen(4200);
+server.listen(4200, "192.168.100.3");

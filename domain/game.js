@@ -276,7 +276,7 @@ var Game = class Game {
             }
         }
 
-        this.intervalGame = setInterval(() => {timeToStart(this)}, 50);
+        this.intervalGame = setInterval(() => {timeToStart(this)}, 1000);
     }   
 }
 
