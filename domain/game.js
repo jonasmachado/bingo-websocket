@@ -45,7 +45,7 @@ var Game = class Game {
         io.to(room.name).emit("GameStarted");
         shuffleArray(this.toBeDrawnNumbers);
 
-        function timeToStart(game){
+        function timeToStart(game) {
             var io = game.io;
             var room = game.room;
 
@@ -276,7 +276,7 @@ var Game = class Game {
             }
         }
 
-        this.intervalGame = setInterval(() => {timeToStart(this)}, 1000);
+        this.intervalGame = setInterval(() => {timeToStart(this)}, 500);
     }   
 }
 

@@ -10,7 +10,7 @@ const password2 = "POVOMARCADOEEEEEEPOVOFELIZ";
 var Integration = class Integration {
 
     constructor() {
-        this.baseUrl = "https://192.168.100.3:45456";
+        this.baseUrl = "https://megabingo.conveyor.cloud";
 
         this.client = axios.create({maxRedirects: 0, httpsAgent: new https.Agent({rejectUnauthorized: false})});
     

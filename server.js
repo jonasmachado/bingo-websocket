@@ -42,56 +42,23 @@ io.on('connection', socket => {
     });
 
     socket.on("bingo", data  => {   
-        var roomName;
-
-        socket.rooms.forEach(function(rm, idx) {
-            if(rm.includes("room-")){
-                roomName=rm;
-            }
-         });
-
-        maker.callBingo(roomName, socket);
+        socket.game.bingo(socket);
     });
 
     socket.on("line", data  => {
-        var roomName;
-
-        socket.rooms.forEach(function(rm, idx) {
-            if(rm.includes("room-")){
-                roomName=rm;
-            }
-         });
-
-        maker.callLine(roomName, socket);
+        socket.game.line(socket);
     });
 
     socket.on("UserMessage", (message)  => {
-        var roomName;
-
-        socket.rooms.forEach(function(rm, idx) {
-            if(rm.includes("room-")){
-                roomName=rm;
-            }
-         });
-
-        maker.callUserMessage(roomName, socket, message);
+        socket.game.emitRoomMessage(message);
     });
 
     socket.on("edges", data  => {
-        var roomName;
-
-        socket.rooms.forEach(function(rm, idx) {
-            if(rm.includes("room-")){
-                roomName=rm;
-            }
-         });
-
-        maker.callEdges(roomName, socket);
+        socket.game.edges(socket);
     });
     
     socket.on('disconnect', function() {
         console.log('disconectei o safado');
-  
      });
   
 });

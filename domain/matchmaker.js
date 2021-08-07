@@ -42,6 +42,10 @@ var MatchMaker = class MatchMaker {
 
             room.maker.games.push(game);
 
+            for(var i = 0; i < room.clients.length; i++) { 
+                room.clients[i].game = game;
+            }
+
             console.warn('Game Started for room: ' + room.name);
         }
 
