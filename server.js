@@ -53,11 +53,34 @@ io.on('connection', socket => {
         socket.game.emitRoomMessage(message);
     });
 
-    socket.on("edges", data  => {
+    socket.on("edges", data  => {   
         socket.game.edges(socket);
     });
     
+    socket.on('leave', function() {
+        socket.rooms.forEach(function(rm, idx) {
+            if(rm.includes("room-")){
+                socket.leave(rm);
+            }
+         });
+        console.log('saiu do jogo');
+     });
+
+     socket.on('leaveRoom', function() {
+        socket.inWaiting = false;
+
+        if(socket == null || !socket.waitingRoom) return;
+
+        socket.waitingRoom.removeClient(socket);
+        console.log('saiu da sala de espera');
+     });
+
     socket.on('disconnect', function() {
+        socket.rooms.forEach(function(rm, idx) {
+            if(rm.includes("room-")){
+                socket.leave(rm);
+            }
+         });
         console.log('disconectei o safado');
      });
   

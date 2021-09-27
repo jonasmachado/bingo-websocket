@@ -77,23 +77,53 @@ var Integration = class Integration {
             var winnersLine = [];
             var winnersBingo = [];
             var gameId = game.room.index;
-            
+            let botId = -1;
+
             try{
 
                 for(var i = 0; i < game.players.length; i++) {
+                    
+                    if(game.players[i].isBot)
+                    {
+                        playersId.push(botId);
+                        continue;
+                    }
+                    
                     playersId.push(game.players[i].client.userId);             
                 }
 
                 for(var i = 0; i < game.winnersEdges.length; i++) {
-                    playersId.push(game.winnersEdges[i].client.userId);             
+
+                    if(game.winnersEdges[i].isBot)
+                    {
+                        winnersEdges.push(botId);
+                        continue;
+                    }   
+
+                    winnersEdges.push(game.winnersEdges[i].client.userId);             
                 }
 
                 for(var i = 0; i < game.winnersLine.length; i++) {
-                    playersId.push(game.winnersLine[i].client.userId);             
+
+                    if(game.winnersLine[i].isBot)
+                    {
+                        winnersLine.push(botId);
+                        continue;
+                    }   
+
+                    winnersLine.push(game.winnersLine[i].client.userId);             
                 }
 
                 for(var i = 0; i < game.winnersBingo.length; i++) {
-                    playersId.push(game.winnersBingo[i].client.userId);             
+
+                    if(game.winnersBingo[i].isBot)
+                    {
+                        console.log("Adicionando bot aos vencedores do bingo");
+                        winnersBingo.push(botId);
+                        continue;
+                    }   
+
+                    winnersBingo.push(game.winnersBingo[i].client.userId);             
                 }
 
             }catch(err) {

@@ -2,6 +2,7 @@ const Player = require('./player');
 const Integration = require('./integration');
 
 var CardCollection = require('./cardCollection');
+const Bot = require('./bot');
 
 var Game = class Game {
     constructor(room, io, modePrize) {
@@ -14,6 +15,10 @@ var Game = class Game {
         this.players = [];
         this.generateCards = generateCards;
         this.emitRoomMessage = emitRoomMessage;
+        this.fireBots = fireBots;
+        this.botBingo = botBingo;
+        this.botLine = botLine;
+        this.botEdges = botEdges;
         this.bingo = bingo;
         this.line = line;
         this.edges = edges;
@@ -39,6 +44,8 @@ var Game = class Game {
         this.edgesPrize = 0;
         this.bingoPrize = 0;
         this.tax = 0;
+
+        this.bots = [];
 
         this.integration = new Integration();
 
@@ -73,6 +80,7 @@ var Game = class Game {
 
             if(game.bingoTimeout) {
                 game.bingoTimeout = false;
+                game.bingoAlreadyPaid = true;
                 clearInterval(game.intervalGame);
                 io.to(room.name).emit("GameOver");   
                 game.integration.finalizeGame(game);
@@ -83,16 +91,18 @@ var Game = class Game {
                 game.lineTimeout = false;
                 game.lineAlreadyPaid = true;
                 emitAmountLine(game);
+                stopBotsTryingLine(game);
             }
 
             if(game.edgesTimeout) {
                 game.edgesTimeout = false;
                 game.edgesAlreadyPaid = true;
                 emitAmountEdges(game);
+                stopBotsTryingEdges(game);
             }
 
             game.started = true;
-            game.countdown = 10;
+            game.countdown = 4;
             
             var drwnNbr = game.toBeDrawnNumbers.pop();
             
@@ -102,11 +112,31 @@ var Game = class Game {
                 game.integration.finalizeGame(game);
                 return; 
             }
-
+            
             game.drawnNumbers.push(drwnNbr);
 
             io.to(room.name).emit("DrawnNumber", drwnNbr);     
+
+            game.fireBots(game, drwnNbr);
         }   
+
+        function fireBots(game, drawnNumber) {
+            for(var i = 0; i < game.bots.length; i++) {
+                game.bots[i].fireDrawnNumber(drawnNumber, game.bots[i]);
+            }
+        }
+
+        function stopBotsTryingLine(game) {
+            for(var i = 0; i < game.bots.length; i++) {
+                game.bots[i].stopTryLine = true;
+            }
+        }
+
+        function stopBotsTryingEdges(game) {
+            for(var i = 0; i < game.bots.length; i++) {
+                game.bots[i].stopTryEdges = true;
+            }
+        }
 
         function generateCards(game) {
 
@@ -126,6 +156,20 @@ var Game = class Game {
                 game.players.push(newPlayer);
 
                 newPlayer.client.emit("UpdateCard", card);
+            }
+
+            var toBeCreatedBots = 20 - game.room.clients.length;
+
+            for(var i = 0; i < toBeCreatedBots; i++)
+            {
+                var index = index = Math.floor((Math.random() * 240) + 250);
+                let card = CardCollection[index];
+
+                var newPlayer = new Player(null, null, true);
+                game.players.push(newPlayer);
+
+                game.bots.push(new Bot(card, game));
+
             }
         }
 
@@ -206,7 +250,8 @@ var Game = class Game {
         function emitAmountEdges(game){
             var winners = game.winnersEdges.length;
             game.winnersEdges.forEach(function(item) {
-                item.client.emit("PlayerEdgesPrize" , game.edgesPrize / winners)
+                if(!item.isBot)
+                    item.client.emit("PlayerEdgesPrize" , game.edgesPrize / winners)
             });
 
             io.to(room.name).emit("RoomEdgesRate", game.edgesPrize / winners, winners); 
@@ -215,7 +260,8 @@ var Game = class Game {
         function emitAmountLine(game){
             var winners = game.winnersLine.length;
             game.winnersLine.forEach(function(item) {
-                item.client.emit("PlayerLinePrize" , game.linePrize / winners)
+                if(!item.isBot)
+                  item.client.emit("PlayerLinePrize" , game.linePrize / winners)
             });
 
             io.to(room.name).emit("RoomLineRate", game.linePrize / winners, winners); 
@@ -224,7 +270,8 @@ var Game = class Game {
         function emitAmountBingo(game){
             var winners = game.winnersBingo.length;
             game.winnersBingo.forEach(function(item) {
-                item.client.emit("PlayerBingoPrize" , game.bingoPrize / winners)
+                if(!item.isBot)
+                    item.client.emit("PlayerBingoPrize" , game.bingoPrize / winners)
             });
 
             io.to(room.name).emit("RoomBingoRate", game.bingoPrize / winners, winners); 
@@ -276,7 +323,34 @@ var Game = class Game {
             }
         }
 
-        this.intervalGame = setInterval(() => {timeToStart(this)}, 500);
+        function botBingo(id) {
+            if(this.bingoAlreadyPaid)
+                return;
+
+            io.to(room.name).emit("BingoPaid", "BOT-" + id); 
+            this.bingoTimeout = true;
+            this.winnersBingo.push(new Player(null, null, true));
+        }
+
+        function botEdges(id) {
+            if(this.edgesAlreadyPaid)
+                return;
+
+            io.to(room.name).emit("EdgePaid", "BOT-" + id); 
+            this.edgesTimeout = true;
+            this.winnersEdges.push(new Player(null, null, true));
+        }
+
+        function botLine(id) {
+            if(this.lineAlreadyPaid)
+              return;
+            
+            io.to(room.name).emit("LinePaid", "BOT-" + id); 
+            this.lineTimeout = true;
+            this.winnersLine.push(new Player(null, null, true));
+        }
+
+        this.intervalGame = setInterval(() => {timeToStart(this)}, 100);
     }   
 }
 

@@ -1,7 +1,8 @@
 var Player = class Player {
-    constructor(client, card) {
+    constructor(client, card, isBot) {
         this.client = client;
         this.card = card;
+        this.isBot = isBot;
     }
 }
 

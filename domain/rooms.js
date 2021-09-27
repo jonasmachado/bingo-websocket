@@ -18,6 +18,9 @@ var Room = class Room {
         function addClient(client) {
             this.clients.push(client);
             client.join(this.name);
+            client.inWaiting = true;
+            client.waitingRoom = this;
+
             console.log("joining room: " + this.name);
 
             if(this.clients.length == 20) {

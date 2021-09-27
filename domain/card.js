@@ -1,6 +1,6 @@
 var Card = class Card {
     constructor() {
-            
+        
     }
 }
 
